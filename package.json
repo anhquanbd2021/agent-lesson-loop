@@ -1,0 +1,16 @@
+{
+  "name": "agent-lesson-loop-demo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Lesson Loop — a toy agent that writes failures back into its own prompt file, with toggles for forgotten, wrong, and guarded lessons.",
+  "scripts": {
+    "start": "node app/server.js",
+    "scan": "node scripts/report.mjs",
+    "test": "node --test \"test/*.test.mjs\"",
+    "check": "npm test && npm run scan"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

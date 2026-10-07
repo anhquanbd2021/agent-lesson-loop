@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson Loop Lab — guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/styles.css">
+<!-- pb-shell --><link rel="stylesheet" href="./pb-shell.css"><!-- pb-shell --><!-- pb-back --><link rel="stylesheet" href="./pb-back.css"><!-- pb-back --></head>
+<body>
+<header>
+  <h1>How the lab works</h1>
+  <p class="sub"><a href="/">&larr; back to the lab</a></p>
+</header>
+<main>
+  <section class="dataset" aria-labelledby="setup-h">
+    <h2 id="setup-h">The setup</h2>
+    <p>The world is a deterministic step pipeline:
+    <code>fetch &rarr; transform &rarr; validate &rarr; store</code>.
+    <code>store</code> enforces one rule — the record must have been
+    validated, and transformed at most once. The agent's naive plan is
+    <code>fetch &rarr; transform &rarr; store</code>, so episode 1 fails on
+    <code>store: rejected unvalidated record</code> every single time.</p>
+    <p>After a failure, <code>reflect()</code> turns the error into a
+    <b>lesson</b>: text plus an actionable fix
+    (<code>{ before: "store", ensure: "validate" }</code>). The lesson is
+    appended to a store — the stand-in for the prompt file — and the planner
+    rewrites the next plan to satisfy every stored lesson.</p>
+  </section>
+
+  <section class="dataset" aria-labelledby="modes-h">
+    <h2 id="modes-h">The four modes</h2>
+    <ul>
+      <li><b>Memory off</b> — the lesson is produced but never persisted.
+          Episodes 1–4 fail identically: improvement requires the lesson to
+          <em>survive</em> to the next run.</li>
+      <li><b>Write-back on</b> — episode 1 fails, the correct lesson is
+          written, episode 2 plans
+          <code>fetch &rarr; transform &rarr; validate &rarr; store</code>
+          and passes.</li>
+      <li><b>Wrong lesson</b> — <code>reflect()</code> misdiagnoses the store
+          rejection and prescribes <code>recheck</code>, a well-formed no-op.
+          The lesson is obeyed literally from episode 2 onward — a useless
+          step now baked into every plan. A learned bug.</li>
+      <li><b>Guarded write-back</b> — the candidate lesson is replayed in a
+          sandbox first. The correct lesson passes replay and is kept; the
+          wrong one (flip the mode and compare) would be rejected before it
+          could pollute memory.</li>
+    </ul>
+  </section>
+
+  <section class="dataset" aria-labelledby="invariants-h">
+    <h2 id="invariants-h">Invariants the tests enforce</h2>
+    <ul>
+      <li>Naive plan always fails with <code>unvalidated</code>; the correct
+          lesson makes the next plan pass.</li>
+      <li>Memory off fails all 4 episodes; write-back passes from episode 2;
+          wrong lesson fails all 4 episodes but with <code>recheck</code>
+          present in the plan from episode 2 (proof the lesson was obeyed).</li>
+      <li>Guarded mode keeps the correct lesson and rejects a wrong one.</li>
+      <li>The file store round-trips: lessons written in one process are the
+          lessons loaded by the next — persistence is a test, not a claim.</li>
+      <li>Appending 12 lessons with cap 6 yields 6 entries and a compaction
+          summary; duplicate signatures are never stored twice.</li>
+    </ul>
+  </section>
+
+  <section class="dataset" aria-labelledby="limits-h">
+    <h2 id="limits-h">Honest limits</h2>
+    <ul>
+      <li>Everything is deterministic — <code>reflect()</code> is a lookup,
+          not an LLM. The demo isolates the <i>write-back mechanism</i>
+          (persist / misdiagnose / guard / compact), not model quality.</li>
+      <li>Real lesson stores are natural-language prompt sections, memory
+          tools, or files like <code>AGENTS.md</code>; the failure modes are
+          the same even when the format is fancier.</li>
+      <li>The "guard" replays one episode — a real system needs a regression
+          suite, not a single retry.</li>
+      <li>Not affiliated with PrimeIntellect; inspired by the self-improving
+          design described for Prime Agent.</li>
+    </ul>
+  </section>
+</main>
+<footer><p>Zero dependencies. Node 20+. <code>npm test</code> to verify.</p></footer>
+<!-- pb-shell --><a class="pb-shell" href="https://github.com/anhquanbd2021/agent-lesson-loop" title="agent-lesson-loop — an Article Playbook demo (view source)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="2" y="2" width="9" height="9" rx="2" fill="#2dd4bf"/><rect x="13" y="2" width="9" height="9" rx="2" fill="#2dd4bf" opacity=".45"/><rect x="2" y="13" width="9" height="9" rx="2" fill="#2dd4bf" opacity=".45"/><rect x="13" y="13" width="9" height="9" rx="4.5" fill="#2dd4bf"/></svg><b>agent-lesson-loop</b><i>DEMO</i></a><!-- pb-shell --><!-- pb-back --><a class="pb-back" id="pb-back" href="https://github.com/anhquanbd2021/agent-lesson-loop" title="Back to the article — agent-lesson-loop">← Article <i>PLAYBOOK</i></a><script>(function(){var a=document.getElementById('pb-back');if(!a)return;var h=location.hostname;if(/^(localhost|127\.0\.0\.1|192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(h)){a.href='//'+h+':'+(/^(localhost|127\.0\.0\.1)$/.test(h)?'1234':'30082')+'/microsites/article.html?slug=agent-lesson-loop';}})();</script><!-- pb-back --></body>
+</html>

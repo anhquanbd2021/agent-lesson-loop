@@ -1,0 +1,26 @@
+{
+  "name": "order-pipeline",
+  "task": "Move one order record from source to sink.",
+  "basePrompt": "You are a pipeline agent. Produce a plan that moves a record from source to sink using these steps: fetch, transform, validate, store.",
+  "steps": {
+    "fetch": "load the record from the source",
+    "transform": "reshape fields to the sink schema",
+    "validate": "check required fields and types",
+    "recheck": "a well-formed no-op the agent believes helps",
+    "store": "write the record — rejects unvalidated or corrupted input"
+  },
+  "naivePlan": ["fetch", "transform", "store"],
+  "rule": "store requires validated === true and at most one transform",
+  "lessons": {
+    "correct": {
+      "id": "L1",
+      "text": "store rejected an unvalidated record — always run validate before store",
+      "fix": { "before": "store", "ensure": "validate" }
+    },
+    "wrong": {
+      "id": "L-wrong",
+      "text": "store rejected the record — re-check the input first; run recheck before store",
+      "fix": { "before": "store", "ensure": "recheck" }
+    }
+  }
+}
